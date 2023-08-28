@@ -1,0 +1,28 @@
+
+server:
+  port: 8080
+
+
+spring:
+  data:
+    mongodb:
+       database: restaurantDB
+       port: 27017
+       host: localhost
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: faizanhafiz928@gmail.com
+    password: sbxbyizqixcyuxqg
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+
+
+
+
