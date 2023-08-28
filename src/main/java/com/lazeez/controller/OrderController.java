@@ -15,28 +15,28 @@ public class OrderController {
     private OrderService orderService;
 
 
-    @GetMapping("/getOrderByUserId")
-    public ResponseEntity<?>  getOrderBYUserId(@RequestHeader("Authorization") String authorizationHeader)
+    @GetMapping("/getOrder")
+    public ResponseEntity<?>  getOrder(@RequestHeader("Authorization") String authorizationHeader)
     {
-        return  orderService.getOrderBYUserId(authorizationHeader);
+        return  orderService.getOrder(authorizationHeader);
 
     }
 
 
 
     @PostMapping("/placeOrder")
-    public  ResponseEntity<?>   placeOrder(@RequestHeader("Authorization") String authorizationHeader,@RequestBody OrderRequest orderRequest)
+    public  ResponseEntity<?>   placeOrder(@RequestHeader("Authorization") String authorizationHeader)
     {
-        return orderService.placeOrder(authorizationHeader,orderRequest);
+        return orderService.placeOrder(authorizationHeader );
 
     }
 
 
     @DeleteMapping("/deleteOrder/{orderId}")
-    public ResponseEntity<?> deleteOrder(@PathVariable String orderId)
+    public ResponseEntity<?> deleteOrder(@RequestHeader("Authorization") String authorizationHeader,@PathVariable String orderId)
     {
 
-        return orderService.deleteOrder(orderId);
+        return orderService.deleteOrder(authorizationHeader,orderId);
 
     }
 

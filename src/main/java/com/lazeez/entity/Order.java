@@ -1,6 +1,7 @@
 package com.lazeez.entity;
 
 
+import com.lazeez.dto.Cart;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
 import java.util.List;
 
 @AllArgsConstructor
@@ -21,11 +23,13 @@ public class Order {
     @Id
     private String id;
 
-    private  String userId;
+    private  User user;
 
     private String status;
 
-    private List<Product> product;
+   private Date orderDate;
+
+    private List<Cart> product;
 
 
 

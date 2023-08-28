@@ -4,10 +4,12 @@ package com.lazeez.service;
 import com.lazeez.config.EmailService;
 import com.lazeez.dto.*;
 import com.lazeez.entity.EmailVerify;
+import com.lazeez.entity.Order;
 import com.lazeez.entity.Product;
 import com.lazeez.entity.User;
 import com.lazeez.exceptions.CustomeException;
 import com.lazeez.repository.EmailVeriyRepository;
+import com.lazeez.repository.OrderRepository;
 import com.lazeez.repository.ProductRepository;
 import com.lazeez.repository.UserRepository;
 import com.lazeez.security.JwtUtil;
@@ -54,6 +56,9 @@ public class UserService {
 
     @Autowired
     EmailService emailService;
+
+    @Autowired
+    OrderRepository orderRepository;
 
 
     Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -284,10 +289,11 @@ public class UserService {
 
 
                     }
-                    total+=product.getPrice();
+
                     cartList.add( Cart.builder().id(product.getId())
                             .productName(product.getProductName())
                             .price(product.getPrice())
+                                    .productId(product.getId())
                             .imageUrl(product.getImageUrl())
                             .quantity(1).build());
                     user.setCartTotal(user.getCartTotal()+product.getPrice());
@@ -298,6 +304,8 @@ public class UserService {
                 Cart cart = Cart.builder().id(product.getId())
                         .productName(product.getProductName())
                         .price(product.getPrice())
+
+                        .productId(product.getId())
                         .imageUrl(product.getImageUrl())
                         .quantity(1).build();
 
@@ -587,50 +595,6 @@ public class UserService {
         }
     }
 
-    public ResponseEntity<?> checkOut(String authorizationHeader) {
-        try{
 
-            User  user =null;
-            if(!authorizationHeader.isEmpty())
-            {
-                user  = getUserByToken(authorizationHeader);
-            }else{
-                return new ResponseEntity<>("{\"message\":\""+"Token must not empty"+"\"}",HttpStatus.BAD_REQUEST);
-            }
-            if(user!=null)
-            {
-
-                List<Cart> cartList = user.getCart();
-                if(!cartList.isEmpty())
-                {
-                        //////
-
-
-
-                    return null;
-
-
-
-
-
-//                     start from here
-
-
-
-
-                    //////////
-                }else{
-                    return  new ResponseEntity<>("cart is empty",HttpStatus.BAD_REQUEST);
-                }
-
-            }
-            return null;
-
-        }catch (Exception ex)
-        {
-            logger.info("Exception in increaseCartItem",ex);
-            return  new ResponseEntity<>("Server Error",HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }
 

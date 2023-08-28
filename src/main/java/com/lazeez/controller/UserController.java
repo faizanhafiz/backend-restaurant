@@ -133,14 +133,6 @@ public class UserController {
     }
 
 
-    @CrossOrigin("*")
-    @PutMapping("/checkout")
-    public ResponseEntity<?> checkOut(@RequestHeader("Authorization") String authorizationHeader)
-    {
-
-
-        return  userService.checkOut(authorizationHeader);
-    }
 
 
 

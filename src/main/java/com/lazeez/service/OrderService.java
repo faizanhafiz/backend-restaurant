@@ -1,6 +1,7 @@
 package com.lazeez.service;
 
 
+import com.lazeez.dto.Cart;
 import com.lazeez.dto.OrderRequest;
 import com.lazeez.entity.Order;
 import com.lazeez.entity.Product;
@@ -13,12 +14,17 @@ import com.lazeez.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -34,21 +40,22 @@ public class OrderService {
     @Autowired
     private ProductRepository productRepository;
     Logger logger = LoggerFactory.getLogger(OrderService.class);
-    public ResponseEntity<?> getOrderBYUserId(String authorizationHeader) {
+    public ResponseEntity<?> getOrder(String authorizationHeader) {
 
         try{
 
             User user = getUserByToken(authorizationHeader);
-
-            List<Order> order = orderRepository.findByUserId(user.getId());
-            if(order!=null)
+            List<Order> order =null;
+            if(user!=null)
             {
-                return  ResponseEntity.ok(order);
-            }else{
+                Sort sort = Sort.by(Sort.Direction.DESC, "orderDate");
+                Pageable pageable = PageRequest.of(0, 10, sort);  // PageRequest with the first page and 10 items per page
+                order = orderRepository.findByUserId(user.getId(), pageable);
 
-
-                return new ResponseEntity<>("Order not Found",HttpStatus.BAD_REQUEST);
             }
+
+
+            return  ResponseEntity.ok(order);
 
 
         }catch (IllegalArgumentException ex)
@@ -71,47 +78,82 @@ public class OrderService {
 
     }
 
-    public ResponseEntity<?> placeOrder(String authorizationHeader,OrderRequest orderRequest) {
+    public ResponseEntity<?> placeOrder(String authorizationHeader) {
 
         try{
-            String UserId =  getUserByToken(authorizationHeader).getId();
-            List<Product> products = new ArrayList<>();
-            Order  order = new Order();
-            order.setStatus(orderRequest.getStatus());
-            order.setUserId(UserId);
 
-            List<String> productIds = orderRequest.getProductIds();
-            for(String prodId : productIds){
-
-                Product product = productRepository.findById(prodId).get();
-                if(product!=null)
-                {
-                    products.add(product);
-                }
+            User  user =null;
+            if(!authorizationHeader.isEmpty())
+            {
+                user  = getUserByToken(authorizationHeader);
+            }else{
+                return new ResponseEntity<>("{\"message\":\""+"Token must not empty"+"\"}",HttpStatus.BAD_REQUEST);
             }
-            order.setProduct(products);
-           Order placedOrder = orderRepository.save(order);
-           if(placedOrder!=null)
-           {
-               return  ResponseEntity.ok("order placed");
-           }else{
-               return  new ResponseEntity<>("Order not Placed",HttpStatus.BAD_REQUEST);
-           }
+            if(user!=null)
+            {
+
+                List<Cart> cartList = user.getCart();
+                if(!cartList.isEmpty())
+                {
+
+                    Order order = Order.builder().
+                            user(user)
+                            .status("PENDING")
+                            .orderDate(new Date())
+                            .product(cartList).
+                            build();
+                   Order confirmOrder = orderRepository.save(order);
+                   if(confirmOrder!=null)
+                   {
+                       return  ResponseEntity.ok("{\"message\":\""+"Order is placed Successfully"+"\"}");
+
+                   }else{
+                       return new  ResponseEntity<>("{\"message\":\""+"Order is not  placed Successfully"+"\"}",HttpStatus.BAD_REQUEST);
+
+                   }
+
+
+
+
+                }else{
+                    return  new ResponseEntity<>("{\"message\":\""+"cart is empty"+"\"}",HttpStatus.BAD_REQUEST);
+                }
+
+            }else{
+                return  new ResponseEntity<>("{\"message\":\""+"User not found"+"\"}",HttpStatus.BAD_REQUEST);
+
+
+            }
+
 
         }catch (Exception ex)
         {
-            logger.info("error occured inside  placeOrder ===> ",ex);
-            return new ResponseEntity<>("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
-
+            logger.info("Exception in increaseCartItem",ex);
+            return  new ResponseEntity<>("Server Error",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    public ResponseEntity<?> deleteOrder(String orderId) {
+    public ResponseEntity<?> deleteOrder(String authorizationHeader,String orderId) {
 
         try
         {
-            orderRepository.deleteById(orderId);
-            return ResponseEntity.ok("Order Deleted");
+            User user = getUserByToken(authorizationHeader);
+            if(user!=null)
+            {
+                Optional<Order> order = orderRepository.findById(orderId);
+                if(order.isPresent())
+                {
+                   orderRepository.delete(order.get());
+                   return  ResponseEntity.ok("{\"message\":\"order deleted\""+"\"}");
+
+                }else{
+                    return  ResponseEntity.ok("{\"message\":\"order not present\""+"\"}");
+
+                }
+            }else{
+                return new ResponseEntity<>("{\"message\":\"user not found \""+"\"}",HttpStatus.BAD_REQUEST);
+            }
+
 
         }catch (Exception ex)
         {
